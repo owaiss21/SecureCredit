@@ -1,0 +1,89 @@
+{% extends 'base_app.html' %}
+{% load static %}
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center">Credit Card Fraud Detection</h1>
+        <form id="prediction-form" class="mt-4">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="median">Median:</label>
+                <input type="number" step="0.01" class="form-control" id="median" name="median" placeholder="Enter median">
+            </div>
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <input type="number" step="0.01" class="form-control" id="price" name="price" placeholder="Enter price">
+            </div>
+            <div class="form-group">
+                <label for="distance">Distance:</label>
+                <input type="number" step="0.01" class="form-control" id="distance" name="distance" placeholder="Enter distance">
+            </div>
+            <div class="form-group">
+                <label for="purchase_method">Purchase Method:</label>
+                <input type="number" class="form-control" id="purchase_method" name="purchase_method" placeholder="Enter purchase method">
+            </div>
+            <div class="form-group">
+                <label>Chip Used?</label><br>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="field1_yes" name="field1" value="1">
+                    <label class="form-check-label" for="field1_yes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="field1_no" name="field1" value="0">
+                    <label class="form-check-label" for="field1_no">No</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Used Pin Number?</label><br>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="field2_yes" name="field2" value="1">
+                    <label class="form-check-label" for="field2_yes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="field2_no" name="field2" value="0">
+                    <label class="form-check-label" for="field2_no">No</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Online Order?</label><br>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="field3_yes" name="field3" value="1">
+                    <label class="form-check-label" for="field3_yes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="field3_no" name="field3" value="0">
+                    <label class="form-check-label" for="field3_no">No</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Predict</button>
+        </form>
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.querySelector('#prediction-form').onsubmit = function(event) {
+            event.preventDefault();
+            fetch("{% url 'predict' %}", {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result) {
+                    document.getElementById('result').innerHTML = `<div class="alert alert-success">Result: ${data.result}</div>`;
+                } else if (data.error) {
+                    document.getElementById('result').innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            });
+        };
+    </script>
+
+{% endblock %}
