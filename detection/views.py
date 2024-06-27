@@ -2,6 +2,14 @@ from django.shortcuts import render
 import joblib
 from django.shortcuts import render
 from django.http import JsonResponse
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import BytesIO
+import base64
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.template import loader
 
 def Home(request):
     return render(request, 'home.html')
@@ -27,4 +35,37 @@ def predict(request):
 
         return JsonResponse({'result': result})
 
-    return render(request, 'form.html')
+    data = pd.read_csv("fraud_data.csv")
+
+    # Drop missing values and convert 'fraud' column to integer type
+    data.dropna(inplace=True)
+    data['fraud'] = data['fraud'].astype(int)
+    payment_methods = ['repeat_retailer', 'online_order', 'used_pin_number', 'used_chip']
+
+    # Prepare the plot
+    plots = []
+    for method in payment_methods:
+        plt.figure(figsize=(10, 6))
+        sns.countplot(data=data, x=method, hue='fraud', palette='viridis')
+        plt.title(f'{method.replace("_", " ").title()} Counts')
+        plt.xlabel(method.replace("_", " ").title())
+        plt.ylabel('Count')
+        plt.legend(title='FRAUD', labels=['Non-Fraudulent', 'Fraudulent'])
+
+        # Save plot to a BytesIO object
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+
+        # Encode plot image to base64
+        graphic = base64.b64encode(image_png)
+        graphic = graphic.decode('utf-8')
+        plots.append(graphic)
+
+        plt.close()
+
+    context = {'plots': plots}
+    # return render(request, 'fraud_analysis.html', context)
+    return render(request, 'form.html', context)
